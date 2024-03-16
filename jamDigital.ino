@@ -43,7 +43,6 @@ void setup() {
   pinMode(button1, INPUT);
   pinMode(button2, INPUT);
   pinMode(button3, INPUT);
-  pinMode(button4, INPUT);
   pinMode(buzzer, OUTPUT);
   digitalWrite(buzzer, LOW);
 
