@@ -1,7 +1,6 @@
 #define button1 3
 #define button2 8
 #define button3 9
-#define button4 10
 #define buzzer 7
 
 #include <Wire.h>
@@ -20,23 +19,21 @@ LiquidCrystal_PCF8574 lcd(0x27);
 
 // variabel waktu sebenarnya
 int currentHrs = 10;
-int currentMin = 39;
+int currentMin = 20;
 int currentSec = 0;
 
 // variabel alarm
-int alarmHrs = 10;
-int alarmMin = 40;
+int alarmHrs = 0;
+int alarmMin = 0;
 
 // state default
 int state = 0;
-int nState = 3; // jumlah state total
 int stateAlarm = 0; //nyalain alarm atau nggak
 
 int currentStateAlarmButton, currentStateButton1, currentStateButton2, currentStateButton3;
 int lastStateAlarmButton = HIGH, lastStateButton1 = HIGH, lastStateButton2 = HIGH, lastStateButton3 = HIGH;
 
 void setup() {
-  
   // setup LCD
   lcd.begin(16, 2);
   lcd.clear();
@@ -61,7 +58,7 @@ void setup() {
   TIMSK1 |= (1 << OCIE1A); // Enable Timer1 compare match interrupt
   sei(); // Enable interrupts
 
-  // Setup interrupt button
+  // Setup interrupt button untuk ganti state
   attachInterrupt(digitalPinToInterrupt(button1), gantiState, FALLING);
   Serial.begin(9600);
 }
@@ -105,6 +102,7 @@ void gantiState() {
 
 // Fungsi Looping Utama
 void loop() {
+  // Kondisi menyalakan buzzer sebagai penanda alarm
   // Jika stateAlarm aktif dan waktu sesuai dengan alarm, aktifkan buzzer
   if (stateAlarm == 1 && currentHrs == alarmHrs && currentMin == alarmMin) {
     digitalWrite(buzzer, HIGH);
@@ -141,62 +139,61 @@ void loop() {
 
 void tampilkanJam() {
   //lcd.clear();
-  lcd.setCursor(0 ,1);
+  lcd.setCursor(0, 0);
   lcd.print("Jam Digital");
 
-  lcd.setCursor(8, 0);
-  lcd.print("   ");
-
   if (currentHrs<10){
-    lcd.setCursor(0,0);
+    lcd.setCursor(0,1);
     lcd.print(0);
-    lcd.setCursor(1,0);
+    lcd.setCursor(1,1);
     lcd.print(currentHrs);
   }
   else {
-    lcd.setCursor(0,0);
+    lcd.setCursor(0,1);
     lcd.print(currentHrs);
   }
 
-  lcd.setCursor(2,0);
+  lcd.setCursor(2,1);
   lcd.print(":");
 
   if (currentMin<10){
-    lcd.setCursor(3,0);
+    lcd.setCursor(3,1);
     lcd.print(0);
-    lcd.setCursor(4,0);
+    lcd.setCursor(4,1);
     lcd.print(currentMin);
   }
   else {
-    lcd.setCursor(3,0);
+    lcd.setCursor(3,1);
     lcd.print(currentMin);
   }
   
-  lcd.setCursor(5,0);
+  lcd.setCursor(5,1);
   lcd.print(":");
 
   if (currentSec<10){
-    lcd.setCursor(6,0);
+    lcd.setCursor(6,1);
     lcd.print(0);
-    lcd.setCursor(7,0);
+    lcd.setCursor(7,1);
     lcd.print(currentSec);
   }
   else {
-    lcd.setCursor(6,0);
+    lcd.setCursor(6,1);
     lcd.print(currentSec);
   }
+  lcd.setCursor(8, 1);
+  lcd.print(" ");
 }
 
 void settingJam() {
   //lcd.clear();
-  lcd.setCursor(0,1);
+  lcd.setCursor(0,0);
   lcd.print("Setting Jam");
 
   // Kalau button2 dipencet, current jam berubah
   currentStateButton2 = digitalRead(button2);
   if (currentStateButton2 == LOW && lastStateButton2 == HIGH) {
     currentHrs = (currentHrs + 1) % 24;
-    lcd.setCursor(0, 0); // Set posisi kursor LCD untuk menampilkan jam
+    lcd.setCursor(0, 1); // Set posisi kursor LCD untuk menampilkan jam
     if (currentHrs < 10) {
       lcd.print("0"); // Tambahkan angka 0 di depan jika jam kurang dari 10
     }
@@ -208,7 +205,7 @@ void settingJam() {
   currentStateButton3 = digitalRead(button3);
   if (currentStateButton3 == LOW && lastStateButton3 == HIGH) {
     currentMin = (currentMin + 1) % 60;
-    lcd.setCursor(3, 0); // Set posisi kursor LCD untuk menampilkan menit
+    lcd.setCursor(3, 1); // Set posisi kursor LCD untuk menampilkan menit
     if (currentMin < 10) {
       lcd.print("0"); // Tambahkan angka 0 di depan jika menit kurang dari 10
     }
@@ -219,18 +216,18 @@ void settingJam() {
 
 void settingAlarm() {
   //lcd.clear();
-  lcd.setCursor(0,1);
+  lcd.setCursor(0,0);
   lcd.print("Setting Alarm");
 
   // Print pengaturan alarm terakhir
   // Jam alarm
-  lcd.setCursor(0, 0); // Set posisi kursor LCD untuk menampilkan jam
+  lcd.setCursor(0, 1); // Set posisi kursor LCD untuk menampilkan jam
   if (alarmHrs < 10) {
     lcd.print("0"); // Tambahkan angka 0 di depan jika jam kurang dari 10
   }
   lcd.print(alarmHrs); // Tampilkan jam
   // Menit alarm
-  lcd.setCursor(3, 0); // Set posisi kursor LCD untuk menampilkan menit
+  lcd.setCursor(3, 1); // Set posisi kursor LCD untuk menampilkan menit
   if (alarmMin < 10) {
     lcd.print("0"); // Tambahkan angka 0 di depan jika menit kurang dari 10
   }
@@ -240,7 +237,7 @@ void settingAlarm() {
   currentStateButton2 = digitalRead(button2);
   if (currentStateButton2 == LOW && lastStateButton2 == HIGH) {
     alarmHrs = (alarmHrs + 1) % 24;
-    lcd.setCursor(0, 0); // Set posisi kursor LCD untuk menampilkan jam
+    lcd.setCursor(0, 1); // Set posisi kursor LCD untuk menampilkan jam
     if (alarmHrs < 10) {
       lcd.print("0"); // Tambahkan angka 0 di depan jika jam kurang dari 10
     }
@@ -252,7 +249,7 @@ void settingAlarm() {
   currentStateButton3 = digitalRead(button3);
   if (currentStateButton3 == LOW && lastStateButton3 == HIGH) {
     alarmMin = (alarmMin + 1) % 60;
-    lcd.setCursor(3, 0); // Set posisi kursor LCD untuk menampilkan menit
+    lcd.setCursor(3, 1); // Set posisi kursor LCD untuk menampilkan menit
     if (alarmMin < 10) {
       lcd.print("0"); // Tambahkan angka 0 di depan jika menit kurang dari 10
     }
@@ -262,146 +259,152 @@ void settingAlarm() {
 }
 
 void stopwatch() {
-  lcd.clear();
-    lcd.print("press start");
-    delay(100);
+  //lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Stopwatch    ");
+  lcd.setCursor(0,1);
+  lcd.print("Press Start ");
 
-    currentStateButton2 = digitalRead(button2);
-    if(currentStateButton2 == LOW && lastStateButton2 == HIGH) // menunggu push button start ditekan untuk mulai
-    {
-        // pengukuran waktu dimulai
-        lcd.clear();
-        a = millis();
+  delay(100);
 
-        // loop terus memperbarui layar dengan waktu yang berlalu
-        while(digitalRead(button3) == HIGH){
-          c = millis();
+  currentStateButton2 = digitalRead(button2);
+  if(currentStateButton2 == LOW && lastStateButton2 == HIGH) // menunggu push button start ditekan untuk mulai
+  {
+      // pengukuran waktu dimulai
+      //lcd.clear();
+      a = millis();
 
-          elapsed = (c - a); // Waktu yang telah berlalu dalam detik
-          h = elapsed / 3600000; // Hitung jam
-          m = (elapsed % 3600000) / 60000; // Hitung menit
-          i = (elapsed % 60000) / 1000; // Hitung detik
-          ms = (elapsed % 1000); // Hitung milidetik
+      // loop terus memperbarui layar dengan waktu yang berlalu
+      while(digitalRead(button3) == HIGH){
+        c = millis();
 
-          if (h<10){
-            lcd.setCursor(0,0);
-            lcd.print("0");
-            lcd.setCursor(1,0);
-            lcd.print(h);
-          }
-          else{
-            lcd.setCursor(0,0);
-            lcd.print(h);
-          }
-          lcd.setCursor(2,0);
-          lcd.print(":");
+        elapsed = (c - a); // Waktu yang telah berlalu dalam detik
+        h = elapsed / 3600000; // Hitung jam
+        m = (elapsed % 3600000) / 60000; // Hitung menit
+        i = (elapsed % 60000) / 1000; // Hitung detik
+        ms = (elapsed % 1000); // Hitung milidetik
 
-          if (m<10){
-            lcd.setCursor(3,0);
-            lcd.print("0");
-            lcd.setCursor(4,0);
-            lcd.print(m);
-          }
-          else{
-            lcd.setCursor(3,0);
-            lcd.print(m);
-          }
-          lcd.setCursor(5,0);
-          lcd.print(":");
-
-          if (i<10){
-            lcd.setCursor(6,0);
-            lcd.print("0");
-            lcd.setCursor(7,0);
-            lcd.print(i);
-          }
-          else{
-            lcd.setCursor(6,0);
-            lcd.print(i);
-          }
-          lcd.setCursor(8,0);
-          lcd.print(".");
-
-          if (ms<10){
-            lcd.setCursor(9,0);
-            lcd.print("0");
-            lcd.setCursor(10,0);
-            lcd.print(ms);
-          }
-          else{
-            lcd.setCursor(9,0);
-            lcd.print(ms);
-          }
+        if (h<10){
+          lcd.setCursor(0,1);
+          lcd.print("0");
+          lcd.setCursor(1,1);
+          lcd.print(h);
         }
-      
+        else{
+          lcd.setCursor(0,1);
+          lcd.print(h);
+        }
+        lcd.setCursor(2,1);
+        lcd.print(":");
 
-      // push button stop ditekan, loop berhenti dan menunggu untuk dimulai kembali
-      if(digitalRead(button3) == LOW)
-      {
-        while(digitalRead(button2) == HIGH)
-        {
-          if (h<10){
-            lcd.setCursor(0,0);
-            lcd.print("0");
-            lcd.setCursor(1,0);
-            lcd.print(h);
-          }
-          else{
-            lcd.setCursor(0,0);
-            lcd.print(h);
-          }
-          lcd.setCursor(2,0);
-          lcd.print(":");
+        if (m<10){
+          lcd.setCursor(3,1);
+          lcd.print("0");
+          lcd.setCursor(4,1);
+          lcd.print(m);
+        }
+        else{
+          lcd.setCursor(3,1);
+          lcd.print(m);
+        }
+        lcd.setCursor(5,1);
+        lcd.print(":");
 
-          if (m<10){
-            lcd.setCursor(3,0);
-            lcd.print("0");
-            lcd.setCursor(4,0);
-            lcd.print(m);
-          }
-          else{
-            lcd.setCursor(3,0);
-            lcd.print(m);
-          }
-          lcd.setCursor(5,0);
-          lcd.print(":");
+        if (i<10){
+          lcd.setCursor(6,1);
+          lcd.print("0");
+          lcd.setCursor(7,1);
+          lcd.print(i);
+        }
+        else{
+          lcd.setCursor(6,1);
+          lcd.print(i);
+        }
+        lcd.setCursor(8,1);
+        lcd.print(".");
 
-          if (i<10){
-            lcd.setCursor(6,0);
-            lcd.print("0");
-            lcd.setCursor(7,0);
-            lcd.print(i);
-          }
-          else{
-            lcd.setCursor(6,0);
-            lcd.print(i);
-          }
-          lcd.setCursor(8,0);
-          lcd.print(".");
-
-          if (ms<10){
-            lcd.setCursor(9,0);
-            lcd.print("0");
-            lcd.setCursor(10,0);
-            lcd.print(ms);
-          }
-          else{
-            lcd.setCursor(9,0);
-            lcd.print(ms);
-          }
-          
-          lcd.setCursor(0,0);
-          delay(100);
+        if (ms<10){
+          lcd.setCursor(9,1);
+          lcd.print("0");
+          lcd.setCursor(10,1);
+          lcd.print(ms);
+        }
+        else{
+          lcd.setCursor(9,1);
+          lcd.print(ms);
         }
       }
+    
+
+    // push button stop ditekan, loop berhenti dan menunggu untuk dimulai kembali
+    if(digitalRead(button3) == LOW)
+    {
+      while(digitalRead(button2) == HIGH)
+      {
+        if (h<10){
+          lcd.setCursor(0,1);
+          lcd.print("0");
+          lcd.setCursor(1,1);
+          lcd.print(h);
+        }
+        else{
+          lcd.setCursor(0,1);
+          lcd.print(h);
+        }
+        lcd.setCursor(2,1);
+        lcd.print(":");
+
+        if (m<10){
+          lcd.setCursor(3,1);
+          lcd.print("0");
+          lcd.setCursor(4,1);
+          lcd.print(m);
+        }
+        else{
+          lcd.setCursor(3,1);
+          lcd.print(m);
+        }
+        lcd.setCursor(5,1);
+        lcd.print(":");
+
+        if (i<10){
+          lcd.setCursor(6,1);
+          lcd.print("0");
+          lcd.setCursor(7,1);
+          lcd.print(i);
+        }
+        else{
+          lcd.setCursor(6,1);
+          lcd.print(i);
+        }
+        lcd.setCursor(8,1);
+        lcd.print(".");
+
+        if (ms<10){
+          lcd.setCursor(9,1);
+          lcd.print("0");
+          lcd.setCursor(10,1);
+          lcd.print(ms);
+        }
+        else{
+          lcd.setCursor(9,1);
+          lcd.print(ms);
+        }
+        
+        lcd.setCursor(0,1);
+        delay(100);
+      }
     }
-    lastStateButton2 = currentStateButton2;
+  }
+  lastStateButton2 = currentStateButton2;
 }
 
 void nyalaAlarm() {
   //lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Alarm");
+  lcd.print("Alarm ");
+  lcd.setCursor(0, 1);
+  lcd.print("            ");
 
   if (stateAlarm == 0) {
     lcd.setCursor(6, 0);
